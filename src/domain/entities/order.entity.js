@@ -1,13 +1,27 @@
 class Order {
-    constructor(id, product, quantity, unitPrice, couponCode = null, discount = 0, total) {
+    constructor(id, productMap, quantity, unitPrice, couponCode, discount, total) {
         this.id = id;
-        this.product = product;       // de Product
-        this.quantity = quantity;     // de Product
+        this.productId = productMap.id;    
+        this.product = productMap.name;
+        this.quantity = quantity;      
         this.unitPrice = unitPrice; 
-        this.couponCode = couponCode; // opcional de Cupon
-        this.discount = discount;     // opcional de Cupon
+        this.couponCode = couponCode;   
+        this.discount = discount;
         this.total = total;
     }
+
+    toResponse() {
+        return {
+            id: this.id,
+            product: this.product,
+            quantity: this.quantity,
+            unitPrice: this.unitPrice,
+            couponCode: this.couponCode,
+            discount: this.discount,
+            total: this.total,
+        };
+    }
+
 }
 
 module.exports = Order;

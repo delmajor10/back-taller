@@ -92,6 +92,23 @@ class ProductMongoRepository extends ProductRepository {
     async delete(id) {
         await ProductModel.findByIdAndDelete(id);
     }
+
+    async getByName(name) {
+        const product = await ProductModel.findOne({ name: name }).exec();
+        
+        if (!product) return null;
+
+        return new Product(
+            product._id.toString(),
+            product.name,
+            product.description,
+            product.price,
+            product.stock,
+            product.category,
+            product.brand,
+            product.imageUrl
+        );
+    }
 }
 
 module.exports = ProductMongoRepository;

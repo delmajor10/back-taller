@@ -1,14 +1,28 @@
 const OrderRepository = require('../../../../domain/repositories/order.repository.interface');
-const OrderModel = require('./models/order.model');
-const Order = require('../../../../domain/entities/order.entity');
+const OrderModel = require('./models/order.model'); 
+const Order = require('../../../../domain/entities/order.entity'); 
 
 class OrderMongoRepository extends OrderRepository {
+    
+    _mapProductData(orderDoc) {
+        if (orderDoc.product) {
+            return {
+                id: orderDoc.product._id.toString(), 
+                name: orderDoc.product.name  
+            };
+        }
+        return { 
+            id: null, 
+            name: 'Producto no disponible / Eliminado' 
+        };
+    }
+
     async getAll() {
-        const orders = await OrderModel.find();
+        const orders = await OrderModel.find().populate('product'); 
         return orders.map(o =>
             new Order(
                 o._id.toString(),
-                o.product,
+                this._mapProductData(o), 
                 o.quantity,
                 o.unitPrice,
                 o.couponCode,
@@ -19,12 +33,12 @@ class OrderMongoRepository extends OrderRepository {
     }
 
     async getById(id) {
-        const order = await OrderModel.findById(id);
+        const order = await OrderModel.findById(id).populate('product'); 
         if (!order) return null;
 
         return new Order(
             order._id.toString(),
-            order.product,
+            this._mapProductData(order),
             order.quantity,
             order.unitPrice,
             order.couponCode,
@@ -35,7 +49,8 @@ class OrderMongoRepository extends OrderRepository {
 
     async create(orderEntity) {
         const newOrder = new OrderModel({
-            product: orderEntity.product,
+            
+            product: orderEntity.productId,
             quantity: orderEntity.quantity,
             unitPrice: orderEntity.unitPrice,
             couponCode: orderEntity.couponCode,
@@ -45,9 +60,11 @@ class OrderMongoRepository extends OrderRepository {
 
         const savedOrder = await newOrder.save();
 
+        await savedOrder.populate('product'); 
+
         return new Order(
             savedOrder._id.toString(),
-            savedOrder.product,
+            this._mapProductData(savedOrder),
             savedOrder.quantity,
             savedOrder.unitPrice,
             savedOrder.couponCode,
@@ -57,10 +74,11 @@ class OrderMongoRepository extends OrderRepository {
     }
 
     async update(id, orderEntity) {
+
         const updatedOrder = await OrderModel.findByIdAndUpdate(
             id,
             {
-                product: orderEntity.product,
+                product: orderEntity.productId,
                 quantity: orderEntity.quantity,
                 unitPrice: orderEntity.unitPrice,
                 couponCode: orderEntity.couponCode,
@@ -68,13 +86,13 @@ class OrderMongoRepository extends OrderRepository {
                 total: orderEntity.total
             },
             { new: true }
-        );
+        ).populate('product');
 
         if (!updatedOrder) return null;
 
         return new Order(
             updatedOrder._id.toString(),
-            updatedOrder.product,
+            this._mapProductData(updatedOrder), 
             updatedOrder.quantity,
             updatedOrder.unitPrice,
             updatedOrder.couponCode,

@@ -1,4 +1,5 @@
-const { BaseError } = require('../../domain/errors');
+//const { BaseError } = require('../../domain/errors');
+const { BaseError, NotFoundError, ConflictError, BadRequestError } = require('../../domain/errors');
 
 function errorHandler(err, req, res, next) {
     if (err instanceof BaseError) {
