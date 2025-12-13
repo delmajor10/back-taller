@@ -8,12 +8,11 @@ class OrderMongoRepository extends OrderRepository {
         return orders.map(o => new Order(
             o._id.toString(),
             o.product,
-            o.description,
             o.quantity,
-            o.price,
+            o.unitPrice,
+            o.couponCode,
             o.discount,
-            o.total,
-            o.date
+            o.total
         ));
     }
 
@@ -23,59 +22,55 @@ class OrderMongoRepository extends OrderRepository {
         return new Order(
             order._id.toString(),
             order.product,
-            order.description,
             order.quantity,
-            order.price,
+            order.unitPrice,
+            order.couponCode,
             order.discount,
-            order.total,
-            order.date
+            order.total
         );
     }
 
     async create(orderEntity) {
         const newOrder = new OrderModel({
             product: orderEntity.product,
-            description: orderEntity.description,
             quantity: orderEntity.quantity,
-            price: orderEntity.price,
+            unitPrice: orderEntity.unitPrice,
+            couponCode: orderEntity.couponCode,
             discount: orderEntity.discount,
-            total: orderEntity.total,
-            date: orderEntity.date
+            total: orderEntity.total
         });
+
         const savedOrder = await newOrder.save();
         return new Order(
             savedOrder._id.toString(),
             savedOrder.product,
-            savedOrder.description,
             savedOrder.quantity,
-            savedOrder.price,
+            savedOrder.unitPrice,
+            savedOrder.couponCode,
             savedOrder.discount,
-            savedOrder.total,
-            savedOrder.date
+            savedOrder.total
         );
     }
 
     async update(id, orderEntity) {
         const updatedOrder = await OrderModel.findByIdAndUpdate(id, {
             product: orderEntity.product,
-            description: orderEntity.description,
             quantity: orderEntity.quantity,
-            price: orderEntity.price,
+            unitPrice: orderEntity.unitPrice,
+            couponCode: orderEntity.couponCode,
             discount: orderEntity.discount,
-            total: orderEntity.total,
-            date: orderEntity.date
+            total: orderEntity.total
         }, { new: true });
 
         if (!updatedOrder) return null;
         return new Order(
             updatedOrder._id.toString(),
             updatedOrder.product,
-            updatedOrder.description,
             updatedOrder.quantity,
-            updatedOrder.price,
+            updatedOrder.unitPrice,
+            updatedOrder.couponCode,
             updatedOrder.discount,
-            updatedOrder.total,
-            updatedOrder.date
+            updatedOrder.total
         );
     }
 

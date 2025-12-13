@@ -1,13 +1,12 @@
 class Order {
-    constructor(id, product, description, quantity, price, discount, total, date) {
+    constructor(id, product, quantity, unitPrice, couponCode = null, discount = 0, total) {
         this.id = id;
-        this.product = product;
-        this.description = description;
-        this.quantity = quantity;
-        this.price = price;
-        this.discount = discount;
+        this.product = product;       // de Product
+        this.quantity = quantity;     // de Product
+        this.unitPrice = unitPrice; 
+        this.couponCode = couponCode; // opcional de Cupon
+        this.discount = discount;     // opcional de Cupon
         this.total = total;
-        this.date = date;
     }
 }
 

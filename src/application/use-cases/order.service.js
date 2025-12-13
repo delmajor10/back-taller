@@ -2,8 +2,10 @@ const Order = require('../../domain/entities/order.entity');
 const { NotFoundError } = require('../../domain/errors');
 
 class OrderService {
-    constructor(orderRepository) {
+    constructor(orderRepository, productRepository, couponRepository) {
         this.orderRepository = orderRepository;
+        this.productRepository = productRepository;   // Para validar producto
+        this.couponRepository = couponRepository;     // Para validar cupón
     }
 
     async getAllOrders() {
@@ -19,37 +21,40 @@ class OrderService {
     }
 
     async createOrder(orderData) {
-        const {
-            product,
-            description,
-            quantity,
-            price,
-            discount = 0,
-            total,
-            date = new Date()
-        } = orderData;
+        const { productId, quantity, couponCode } = orderData;
 
-        // Validación básica (puedes ajustar según tu lógica)
-        if (!product || !quantity || !price || total === undefined) {
-            throw new Error("Missing required order fields");
+        // Validar producto
+        const product = await this.productRepository.getById(productId);
+        if (!product) {
+            throw new NotFoundError(`Product with id ${productId} not found`);
         }
 
-        // Aquí podrías agregar validación para total correcto:
-        // Ejemplo: total esperado = (price * quantity) - discount
-        const expectedTotal = (price * quantity) - discount;
-        if (total !== expectedTotal) {
-            throw new Error(`Invalid total. Expected ${expectedTotal}, got ${total}`);
+        const unitPrice = product.price;
+
+        // Validar cupón si existe
+        let discount = 0;
+        if (couponCode) {
+            const coupon = await this.couponRepository.getByCode(couponCode);
+            if (!coupon) {
+                throw new NotFoundError(`Coupon with code ${couponCode} not found`);
+            }
+            discount = coupon.discount; // asumimos cantidad fija
+        }
+
+        // Calcular total
+        const total = (unitPrice * quantity) - discount;
+        if (total < 0) {
+            throw new Error("Total cannot be negative");
         }
 
         const orderEntity = new Order(
-            null, // ID se genera en la base
-            product,
-            description,
+            null,       // ID generado por DB
+            product,    // referencia a Product
             quantity,
-            price,
+            unitPrice,
+            couponCode || null,
             discount,
-            total,
-            date
+            total
         );
 
         return this.orderRepository.create(orderEntity);
@@ -61,36 +66,40 @@ class OrderService {
             throw new NotFoundError(`Order with id ${id} not found`);
         }
 
-        const {
-            product,
-            description,
-            quantity,
-            price,
-            discount = 0,
-            total,
-            date = existingOrder.date
-        } = orderData;
+        const { productId, quantity, couponCode } = orderData;
 
-        // Validación básica
-        if (!product || !quantity || !price || total === undefined) {
-            throw new Error("Missing required order fields");
+        // Validar producto
+        const product = await this.productRepository.getById(productId);
+        if (!product) {
+            throw new NotFoundError(`Product with id ${productId} not found`);
         }
 
-        // Validar total también en update
-        const expectedTotal = (price * quantity) - discount;
-        if (total !== expectedTotal) {
-            throw new Error(`Invalid total. Expected ${expectedTotal}, got ${total}`);
+        const unitPrice = product.price;
+
+        // Validar cupón si existe
+        let discount = 0;
+        if (couponCode) {
+            const coupon = await this.couponRepository.getByCode(couponCode);
+            if (!coupon) {
+                throw new NotFoundError(`Coupon with code ${couponCode} not found`);
+            }
+            discount = coupon.discount;
+        }
+
+        // Calcular total
+        const total = (unitPrice * quantity) - discount;
+        if (total < 0) {
+            throw new Error("Total cannot be negative");
         }
 
         const orderEntity = new Order(
             id,
             product,
-            description,
             quantity,
-            price,
+            unitPrice,
+            couponCode || null,
             discount,
-            total,
-            date
+            total
         );
 
         return this.orderRepository.update(id, orderEntity);
