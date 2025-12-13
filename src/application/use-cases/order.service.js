@@ -4,8 +4,8 @@ const { NotFoundError } = require('../../domain/errors');
 class OrderService {
     constructor(orderRepository, productRepository, couponRepository) {
         this.orderRepository = orderRepository;
-        this.productRepository = productRepository;   // Para validar producto
-        this.couponRepository = couponRepository;     // Para validar cupón
+        this.productRepository = productRepository;   // valida producto
+        this.couponRepository = couponRepository;     // valida cupón
     }
 
     async getAllOrders() {
@@ -31,14 +31,14 @@ class OrderService {
 
         const unitPrice = product.price;
 
-        // Validar cupón si existe
+        // Validar cupón, opcional
         let discount = 0;
         if (couponCode) {
             const coupon = await this.couponRepository.getByCode(couponCode);
             if (!coupon) {
                 throw new NotFoundError(`Coupon with code ${couponCode} not found`);
             }
-            discount = coupon.discount; // asumimos cantidad fija
+            discount = coupon.discount; // cantidad fija
         }
 
         // Calcular total
@@ -49,7 +49,7 @@ class OrderService {
 
         const orderEntity = new Order(
             null,       // ID generado por DB
-            product,    // referencia a Product
+            product,    // de Product
             quantity,
             unitPrice,
             couponCode || null,
@@ -76,7 +76,7 @@ class OrderService {
 
         const unitPrice = product.price;
 
-        // Validar cupón si existe
+        // Validar cupón, opcional
         let discount = 0;
         if (couponCode) {
             const coupon = await this.couponRepository.getByCode(couponCode);
