@@ -1,14 +1,27 @@
 class Order {
-    constructor(id, product, description, quantity, price, discount, total, date) {
+    constructor(id, productMap, quantity, unitPrice, couponCode, discount, total) {
         this.id = id;
-        this.product = product;
-        this.description = description;
-        this.quantity = quantity;
-        this.price = price;
+        this.productId = productMap.id;    
+        this.product = productMap.name;
+        this.quantity = quantity;      
+        this.unitPrice = unitPrice; 
+        this.couponCode = couponCode;   
         this.discount = discount;
         this.total = total;
-        this.date = date;
     }
+
+    toResponse() {
+        return {
+            id: this.id,
+            product: this.product,
+            quantity: this.quantity,
+            unitPrice: this.unitPrice,
+            couponCode: this.couponCode,
+            discount: this.discount,
+            total: this.total,
+        };
+    }
+
 }
 
 module.exports = Order;

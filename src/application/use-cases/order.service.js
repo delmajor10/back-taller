@@ -2,8 +2,10 @@ const Order = require('../../domain/entities/order.entity');
 const { NotFoundError } = require('../../domain/errors');
 
 class OrderService {
-    constructor(orderRepository) {
+    
+    constructor(orderRepository, productRepository) {
         this.orderRepository = orderRepository;
+        this.productRepository = productRepository;
     }
 
     async getAllOrders() {
@@ -19,81 +21,78 @@ class OrderService {
     }
 
     async createOrder(orderData) {
-        const {
-            product,
-            description,
-            quantity,
-            price,
-            discount = 0,
-            total,
-            date = new Date()
-        } = orderData;
+        const { product: productIdentifier, quantity, couponCode } = orderData; 
 
-        // Validación básica (puedes ajustar según tu lógica)
-        if (!product || !quantity || !price || total === undefined) {
-            throw new Error("Missing required order fields");
+        const product = await this.productRepository.getByName(productIdentifier); 
+
+        if (!product) {
+            throw new NotFoundError(`Product with name ${productIdentifier} not found`);
         }
 
-        // Aquí podrías agregar validación para total correcto:
-        // Ejemplo: total esperado = (price * quantity) - discount
-        const expectedTotal = (price * quantity) - discount;
-        if (total !== expectedTotal) {
-            throw new Error(`Invalid total. Expected ${expectedTotal}, got ${total}`);
-        }
+        const unitPrice = product.price;
+
+        const discount = 0; 
+        const total = (unitPrice * quantity) - discount;
 
         const orderEntity = new Order(
-            null, // ID se genera en la base
-            product,
-            description,
+            null, 
+            { id: product.id, name: product.name },
             quantity,
-            price,
+            unitPrice,
+            couponCode || null,
             discount,
-            total,
-            date
+            total
         );
-
+        
         return this.orderRepository.create(orderEntity);
     }
-
+    
     async updateOrder(id, orderData) {
+
         const existingOrder = await this.orderRepository.getById(id);
+
         if (!existingOrder) {
             throw new NotFoundError(`Order with id ${id} not found`);
         }
 
-        const {
-            product,
-            description,
-            quantity,
-            price,
-            discount = 0,
-            total,
-            date = existingOrder.date
-        } = orderData;
+        const { product: productIdentifier, quantity, couponCode } = orderData; 
+        
+        let currentProductId = existingOrder.productId; 
+        let currentProductName = existingOrder.product;
+        let currentUnitPrice = existingOrder.unitPrice; 
+        let productDetails = null; 
 
-        // Validación básica
-        if (!product || !quantity || !price || total === undefined) {
-            throw new Error("Missing required order fields");
+        if (productIdentifier) {
+            productDetails = await this.productRepository.getByName(productIdentifier); 
+            
+            if (!productDetails) {
+                throw new NotFoundError(`El producto con nombre "${productIdentifier}" no existe o no está disponible.`);
+            }
+
+            currentProductId = productDetails.id;
+            currentProductName = productDetails.name;
+            currentUnitPrice = productDetails.price;
         }
 
-        // Validar total también en update
-        const expectedTotal = (price * quantity) - discount;
-        if (total !== expectedTotal) {
-            throw new Error(`Invalid total. Expected ${expectedTotal}, got ${total}`);
-        }
+        const finalQuantity = quantity !== undefined ? quantity : existingOrder.quantity;
+        const finalUnitPrice = currentUnitPrice; 
+        const finalCouponCode = couponCode !== undefined ? couponCode : existingOrder.couponCode;
+        
+        const discount = 0; 
+        const total = (finalUnitPrice * finalQuantity) - discount;
 
-        const orderEntity = new Order(
-            id,
-            product,
-            description,
-            quantity,
-            price,
+        const updatedOrderEntity = new Order(
+            id, 
+            { id: currentProductId, name: currentProductName }, 
+            finalQuantity,
+            finalUnitPrice,
+            finalCouponCode,
             discount,
-            total,
-            date
+            total
         );
 
-        return this.orderRepository.update(id, orderEntity);
+
+        return this.orderRepository.update(id, updatedOrderEntity); 
     }
 
     async deleteOrder(id) {
@@ -103,6 +102,7 @@ class OrderService {
         }
         return this.orderRepository.delete(id);
     }
+    
 }
 
-module.exports = OrderService;
+module.exports = OrderService; 
