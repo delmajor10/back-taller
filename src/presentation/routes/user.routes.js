@@ -62,7 +62,7 @@ router.get('/:id', asyncHandler(userController.getById));
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/UserInput'
+ *             $ref: '#/components/schemas/User'
  *     responses:
  *       201:
  *         description: The created user.

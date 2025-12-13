@@ -1,6 +1,6 @@
-class CuponRepository {
+class CouponRepository {
     constructor() {
-        if (this.constructor === CuponRepository) {
+        if (this.constructor === CouponRepository) {
             throw new Error("Cannot instantiate abstract class");
         }
     }
@@ -13,11 +13,11 @@ class CuponRepository {
         throw new Error("Method 'getById()' must be implemented.");
     }
 
-    async create(product) {
+    async create(coupon) {
         throw new Error("Method 'create()' must be implemented.");
     }
 
-    async update(id, product) {
+    async update(id, coupon) {
         throw new Error("Method 'update()' must be implemented.");
     }
 
@@ -26,4 +26,4 @@ class CuponRepository {
     }
 }
 
-module.exports = CuponRepository;
+module.exports = CouponRepository;

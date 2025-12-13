@@ -13,7 +13,7 @@ app.use(express.json());
 
 // Routes
 const productRoutes = require('./src/presentation/routes/product.routes');
-const cuponRoutes = require('./src/presentation/routes/cupon.routes');
+const couponRoutes = require('./src/presentation/routes/coupon.routes');
 const userRoutes = require('./src/presentation/routes/user.routes');
 const roleRoutes = require('./src/presentation/routes/role.routes');
 const authRoutes = require('./src/presentation/routes/auth.routes'); // Importar rutas de autenticación
@@ -21,7 +21,7 @@ const orderRoutes = require('./src/presentation/routes/order.routes');
 
 
 app.use('/api/v1/products', productRoutes);
-app.use('/api/v1/cupons', cuponRoutes);
+app.use('/api/v1/coupons', couponRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/roles', roleRoutes);
 app.use('/api/v1/auth', authRoutes); // Usar rutas de autenticación

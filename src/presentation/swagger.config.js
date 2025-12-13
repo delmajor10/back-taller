@@ -46,27 +46,36 @@ const swaggerDefinition = {
           }
         }
       },
-      UserInput: {
+      Coupon: {
         type: 'object',
         properties: {
-          name: {
+          id: {
             type: 'string',
-            example: 'John Doe'
+            example: '60c72b2f9b1e8a001f8e4caa'
           },
-          email: {
+          codigo: {
             type: 'string',
-            example: 'jhon.doe@exmaple.com'
+            example: 'Descuento1'
           },
-          password: {
+          tipoDescuento: {
             type: 'string',
-            example: 'password123'
+            example: 'Porcentaje'
           },
-          roles: {
-            type: 'array',
-            items: {
-              type: 'string'
-            },
-            example: ['user']
+          valorDescuento: {
+            type: 'number',
+            example: 10
+          },
+          fechaIni: {
+            type: 'date',
+            example: '01/12/2025'
+          },
+          fechaFin: {
+            type: 'date',
+            example: '31/12/2025'
+          },
+          estado: {
+            type: 'string',
+            example: 'vigente'
           }
         }
       }
