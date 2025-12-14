@@ -1,4 +1,5 @@
 const { Router } = require('express');
+
 const OrderController = require('../controller/order.controller');
 const authenticateToken = require('../middlewares/auth.middleware');
 const isAdmin = require('../middlewares/admin.middleware');
@@ -7,10 +8,13 @@ const asyncHandler = require('../utils/async.handler');
 const OrderService = require('../../application/use-cases/order.service');
 const OrderMongoRepository = require('../../infrastructure/repositories/database/mongo/order.mongo.repository');
 const ProductMongoRepository = require('../../infrastructure/repositories/database/mongo/product.mongo.repository');
+const CouponMongoRepository = require('../../infrastructure/repositories/database/mongo/coupon.mongo.repository');
 
 const orderRepository = new OrderMongoRepository();
 const productRepository = new ProductMongoRepository();
-const orderService = new OrderService(orderRepository, productRepository);
+const couponRepository = new CouponMongoRepository();
+
+const orderService = new OrderService(orderRepository, productRepository, couponRepository);
 const orderController = new OrderController(orderService);
 
 const router = Router();

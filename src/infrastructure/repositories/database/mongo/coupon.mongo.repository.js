@@ -45,6 +45,24 @@ class CouponMongoRepository extends CouponRepository {
     async delete(id) {
         await CouponModel.findByIdAndDelete(id);
     }
+
+    async getByCode(code) {
+
+        const coupon = await CouponModel.findOne({ codCupon: code }); 
+        
+        if (!coupon) return null;
+
+        return new Coupon(
+            coupon._id.toString(),      
+            coupon.tipoDescuento,      
+            coupon.valorDescuento,     
+            coupon.fechaIni,           
+            coupon.fechaFin,          
+            coupon.estado,             
+            coupon.codCupon            
+        );
+    }    
+
 }
 
 module.exports = CouponMongoRepository;

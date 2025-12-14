@@ -1,11 +1,12 @@
 const Order = require('../../domain/entities/order.entity');
-const { NotFoundError } = require('../../domain/errors');
+const { NotFoundError, BadRequestError } = require('../../domain/errors');
 
 class OrderService {
     
-    constructor(orderRepository, productRepository) {
+    constructor(orderRepository, productRepository, couponRepository) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
+        this.couponRepository = couponRepository;
     }
 
     async getAllOrders() {
@@ -31,16 +32,30 @@ class OrderService {
 
         const unitPrice = product.price;
 
-        const discount = 0; 
-        const total = (unitPrice * quantity) - discount;
+        const totalAntesDeDescuento = unitPrice * quantity;
+
+        let finalDiscount = 0;
+        let finalCouponCode = couponCode || null;
+
+        if (couponCode) {
+            const coupon = await this.couponRepository.getByCode(finalCouponCode);
+            if (coupon.valorDescuento > totalAntesDeDescuento) {
+                throw new BadRequestError('Coupon invalid: Discount exceeds order subtotal.');
+            }
+            // el descuento debe ser un monto fijo
+            finalDiscount = coupon.valorDescuento; 
+            finalCouponCode = coupon.codCupon;
+        }
+
+        const total = totalAntesDeDescuento - finalDiscount;
 
         const orderEntity = new Order(
             null, 
             { id: product.id, name: product.name },
             quantity,
             unitPrice,
-            couponCode || null,
-            discount,
+            finalCouponCode,
+            finalDiscount,
             total
         );
         
@@ -55,42 +70,52 @@ class OrderService {
             throw new NotFoundError(`Order with id ${id} not found`);
         }
 
-        const { product: productIdentifier, quantity, couponCode } = orderData; 
-        
         let currentProductId = existingOrder.productId; 
         let currentProductName = existingOrder.product;
         let currentUnitPrice = existingOrder.unitPrice; 
         let productDetails = null; 
 
-        if (productIdentifier) {
-            productDetails = await this.productRepository.getByName(productIdentifier); 
-            
-            if (!productDetails) {
-                throw new NotFoundError(`El producto con nombre "${productIdentifier}" no existe o no está disponible.`);
-            }
+        // ... (Lógica para determinar el nuevo precio unitario) ...
 
-            currentProductId = productDetails.id;
-            currentProductName = productDetails.name;
-            currentUnitPrice = productDetails.price;
+        const finalQuantity = orderData.quantity !== undefined ? orderData.quantity : existingOrder.quantity;
+        const finalUnitPrice = currentUnitPrice; 
+        
+        const finalCouponCode = orderData.couponCode !== undefined ? orderData.couponCode : existingOrder.couponCode;
+
+        let finalDiscount = 0; 
+
+        if (finalCouponCode && typeof finalCouponCode === 'string' && finalCouponCode.trim() !== '') {
+            
+            // subtotal
+            const totalBeforeDiscount = finalUnitPrice * finalQuantity; 
+            
+            const coupon = await this.couponRepository.getByCode(finalCouponCode.trim()); 
+            
+            if (coupon) {
+
+                if (coupon.valorDescuento > totalBeforeDiscount) {
+                    throw new BadRequestError('Coupon invalid: Discount exceeds order subtotal.');
+                }
+                finalDiscount = coupon.valorDescuento; // Descuento monto fijo
+            } else {
+                console.log(`[AVISO] Cupón ${finalCouponCode} no encontrado durante el update. Será removido.`);
+                finalCouponCode = null; 
+            }
+        } else {
+            finalCouponCode = null;
         }
 
-        const finalQuantity = quantity !== undefined ? quantity : existingOrder.quantity;
-        const finalUnitPrice = currentUnitPrice; 
-        const finalCouponCode = couponCode !== undefined ? couponCode : existingOrder.couponCode;
-        
-        const discount = 0; 
-        const total = (finalUnitPrice * finalQuantity) - discount;
+        const total = totalBeforeDiscount - finalDiscount; 
 
         const updatedOrderEntity = new Order(
             id, 
             { id: currentProductId, name: currentProductName }, 
             finalQuantity,
             finalUnitPrice,
-            finalCouponCode,
-            discount,
-            total
+            finalCouponCode, 
+            finalDiscount,   
+            total            
         );
-
 
         return this.orderRepository.update(id, updatedOrderEntity); 
     }
